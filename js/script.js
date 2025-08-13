@@ -1,0 +1,51 @@
+(function(){"use strict";
+const qs=(s,sc=document)=>sc.querySelector(s);const qsa=(s,sc=document)=>Array.from(sc.querySelectorAll(s));
+const site={baseUrl:"https://siddharthasrivastav.github.io"};
+
+// NAVBAR behavior
+function initNavbar(){const nav=qs(".navbar");if(!nav)return;const setSolid=()=>{if(window.scrollY>10){nav.classList.add("solid")}else{nav.classList.remove("solid")}};setSolid();window.addEventListener("scroll",setSolid)}
+
+// Smooth scroll for hash links
+function initSmoothScroll(){qsa('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{const id=a.getAttribute('href');if(id.length>1){const target=qs(id);if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth'});}}});});}
+
+// IntersectionObserver reveal
+function initReveal(){const els=qsa('.reveal');if(!('IntersectionObserver'in window)||!els.length)return els.forEach(e=>e.classList.add('is-visible'));const io=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add('is-visible');io.unobserve(en.target)}})},{threshold:.15});els.forEach(el=>io.observe(el))}
+
+// Simple carousel
+function initCarousel(rootSel,{interval=2500,autoplay=true}={}){const root=qs(rootSel);if(!root)return;const track=qs('.logo-track, .testimonial-track',root)||qs('.track',root);if(!track)return;let idx=0;let width=track.scrollWidth;let viewport=root.clientWidth;let raf=null;let paused=false;const step=()=>{if(paused||!autoplay)return;idx+=1;track.style.transform=`translateX(${-idx}px)`;const maxShift=width-viewport;if(-parseInt(track.style.transform.replace(/[^\-\d]/g,''))>maxShift){idx=0;track.style.transform='translateX(0)'}raf=setTimeout(step,interval/60)};const onResize=()=>{width=track.scrollWidth;viewport=root.clientWidth};window.addEventListener('resize',onResize);root.addEventListener('mouseenter',()=>paused=true);root.addEventListener('mouseleave',()=>{paused=false});setTimeout(step,interval)}
+
+// KPI counters
+function initCounters(){const counters=qsa('[data-counter]');if(!counters.length)return;const animate=el=>{const target=Number(el.getAttribute('data-target')||0);const dur=1200;const start=performance.now();const tick=t=>{const p=Math.min(1,(t-start)/dur);const val=Math.floor(p*target);qs('.num',el).textContent=val.toLocaleString();if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)};if('IntersectionObserver'in window){const io=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting){animate(en.target);io.unobserve(en.target)}})},{threshold:.3});counters.forEach(c=>io.observe(c))}else{counters.forEach(animate)}}
+
+// Modal
+function createModal(){let modal=qs('#modal');if(modal)return modal;modal=document.createElement('div');modal.id='modal';modal.className='modal';modal.innerHTML=`<div class="modal-dialog"><div class="modal-header"><strong>Project details</strong><button aria-label="Close" class="btn btn-secondary" data-close>Close</button></div><div class="modal-body"></div></div>`;document.body.appendChild(modal);modal.addEventListener('click',e=>{if(e.target===modal||e.target.hasAttribute('data-close'))closeModal()});return modal}
+function openModal(html){const m=createModal();qs('.modal-body',m).innerHTML=html;m.classList.add('open');document.body.style.overflow='hidden'}
+function closeModal(){const m=qs('#modal');if(!m)return;m.classList.remove('open');qs('.modal-body',m).innerHTML='';document.body.style.overflow=''}
+
+// Data loader with fallback
+const DEFAULT_PROJECTS=[
+  {"title":"Retail Sales Performance Dashboard","slug":"retail-sales-tableau","category":["Tableau"],"summary":"Interactive Tableau workbook analyzing sales, customers, and profitability with drill-down views.","tech":["Tableau"],"image":"assets/images/projects/sales-tableau.svg","links":{"github":"https://github.com/Siddharthasrivastav/Sales-Data-Analysis-Tableau","tableau":"REPLACE_WITH_TABLEAU_PUBLIC_URL_IF_AVAILABLE"}},
+  {"title":"Pizza Sales Analytics (SQL + Power BI)","slug":"pizza-sales-sql-powerbi","category":["SQL","Power BI"],"summary":"End-to-end pipeline: SQL queries for KPIs + Power BI dashboard with visuals and measures.","tech":["SQL","Power BI"],"image":"assets/images/projects/pizza-powerbi.svg","links":{"github":"https://github.com/Siddharthasrivastav/Pizza-Sale-Data-Analysis-SQL","powerbi":"REPLACE_WITH_POWER_BI_EMBED_URL"}},
+  {"title":"Credit Card Transactions Analysis (Power BI)","slug":"credit-card-transactions-powerbi","category":["Power BI"],"summary":"Metrics on spend categories, customer segments, and trends with slicers and drillthrough.","tech":["Power BI"],"image":"assets/images/projects/credit-card-powerbi.svg","links":{"github":"https://github.com/Siddharthasrivastav/Credit-card-Transaction-Power-Bi-Project","powerbi":"REPLACE_WITH_POWER_BI_EMBED_URL"}}
+];
+async function loadProjects(){try{const res=await fetch('data/projects.json',{cache:'no-store'});if(!res.ok)throw new Error('HTTP '+res.status);return await res.json()}catch(err){return DEFAULT_PROJECTS}}
+
+// Renderers
+async function initFeatured(){const mount=qs('#featured-projects');if(!mount)return;const items=await loadProjects();mount.innerHTML=items.slice(0,3).map(p=>projectCardHTML(p)).join('');
+function projectCardHTML(p){const tech=p.tech.map(t=>`<span class="badge">${t}</span>`).join('');return `<article class="card portfolio-card reveal"><div class="thumb"><img src="${p.image}" alt="${p.title} thumbnail" loading="lazy"></div><h3 class="card-title underline-accent">${p.title}</h3><p class="card-sub">${p.summary}</p><div class="badges">${tech}</div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-secondary" href="portfolio.html#${p.slug}">View details</a>${p.links.github?`<a class="btn btn-secondary" target="_blank" rel="noopener" href="${p.links.github}">GitHub</a>`:''}</div></article>`}
+
+async function initPortfolio(){const grid=qs('#portfolio-grid');if(!grid)return;const items=await loadProjects();const cats=["All",...Array.from(new Set(items.flatMap(i=>i.category)))];const bar=qs('#filter-bar');bar.innerHTML=cats.map(c=>`<button class="filter-btn" data-cat="${c}">${c}</button>`).join('');bar.addEventListener('click',e=>{const btn=e.target.closest('.filter-btn');if(!btn)return;qsa('.filter-btn',bar).forEach(b=>b.classList.remove('active'));btn.classList.add('active');const cat=btn.getAttribute('data-cat');render(cat)});qsa('.filter-btn',bar)[0]?.classList.add('active');function render(cat='All'){grid.innerHTML=items.filter(i=>cat==='All'||i.category.includes(cat)).map(p=>portfolioCardHTML(p)).join('');bindDetailHandlers()}render('All');function bindDetailHandlers(){qsa('[data-detail]').forEach(btn=>{btn.addEventListener('click',()=>{const slug=btn.getAttribute('data-detail');const p=items.find(i=>i.slug===slug);openModal(projectDetailHTML(p))})})}}
+function portfolioCardHTML(p){const tech=p.tech.map(t=>`<span class="badge">${t}</span>`).join('');const links=[p.links.github?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.github}\">GitHub</a>`:'',p.links.powerbi?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.powerbi}\">Power BI</a>`:'',p.links.tableau?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.tableau}\">Tableau</a>`:''].filter(Boolean).join('');return `<article id="${p.slug}" class="card portfolio-card reveal"><div class="thumb"><img src="${p.image}" alt="${p.title} thumbnail" loading="lazy"></div><h3 class="card-title underline-accent">${p.title}</h3><p class="card-sub">${p.summary}</p><div class="badges">${tech}</div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" data-detail="${p.slug}">View details</button>${links}</div></article>`}
+function projectDetailHTML(p){const embed=p.links.powerbi?`<div style="aspect-ratio:16/9;background:#0b1f3b0e;border-radius:12px;overflow:hidden"><iframe title="Power BI embed placeholder" src="${p.links.powerbi}" loading="lazy" width="100%" height="100%" style="border:0"></iframe></div>`:p.links.tableau?`<div style=\"aspect-ratio:16/9;background:#0b1f3b0e;border-radius:12px;overflow:hidden\"><iframe title=\"Tableau embed placeholder\" src=\"${p.links.tableau}\" loading=\"lazy\" width=\"100%\" height=\"100%\" style=\"border:0\"></iframe></div>`:"";const links=[p.links.github?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.github}\">GitHub</a>`:'',p.links.powerbi?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.powerbi}\">Open Power BI</a>`:'',p.links.tableau?`<a class=\"btn btn-secondary\" target=\"_blank\" rel=\"noopener\" href=\"${p.links.tableau}\">Open Tableau</a>`:''].filter(Boolean).join('');return `<div class=\"grid\" style=\"gap:16px\"><h2 style=\"margin:0\">${p.title}</h2><p>${p.summary}</p>${embed}<div style=\"display:flex;gap:10px;flex-wrap:wrap\">${links}</div></div>`}
+
+// Contact form
+function initContactForm(){const form=qs('#contact-form');if(!form)return;form.addEventListener('submit',e=>{e.preventDefault();const name=qs('[name="name"]',form).value.trim();const email=qs('[name="email"]',form).value.trim();const message=qs('[name="message"]',form).value.trim();if(!name||!email||!message){alert('Please complete all fields.');return}const subject=`Inquiry from ${name}`;const body=`Name: ${name}%0AEmail: ${email}%0A%0A${encodeURIComponent(message)}`;window.location.href=`mailto:letsmailsiddhartha@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`})}
+
+// Page inits
+function initHome(){if(!qs('#home-page'))return;initFeatured();initCounters();initCarousel('#logos',{interval:25});initCarousel('#testimonials',{interval:2500})}
+function initPortfolioPage(){if(!qs('#portfolio-page'))return;initPortfolio()}
+function initBlogs(){if(!qs('#blogs-page'))return}
+
+// Init
+window.addEventListener('DOMContentLoaded',()=>{initNavbar();initSmoothScroll();initReveal();initHome();initPortfolioPage();initContactForm()});
+})();
