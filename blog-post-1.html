@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Practical SQL Patterns for Analytics | Blog | Siddhartha Srivastava</title>
+	<meta name="description" content="Window functions, cohorting, and CTE patterns for analytics.">
+	<link rel="canonical" href="/blog-post-1.html">
+	<meta property="og:type" content="article">
+	<meta property="og:title" content="Practical SQL Patterns for Analytics">
+	<meta property="og:description" content="Window functions, cohorting, and CTE patterns for analytics.">
+	<meta property="og:image" content="/assets/images/blog-1.jpg">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Practical SQL Patterns for Analytics">
+	<meta name="twitter:description" content="Window functions, cohorting, and CTE patterns for analytics.">
+	<meta name="twitter:image" content="/assets/images/blog-1.jpg">
+	<link rel="icon" href="/assets/logos/brand1.svg" type="image/svg+xml">
+	<link rel="apple-touch-icon" href="/assets/logos/brand1.svg">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+	<header class="navbar" role="banner">
+		<div class="container nav-inner">
+			<a class="brand" href="/index.html" aria-label="Home"><span class="dot"></span><span>Siddhartha Srivastava</span></a>
+			<nav class="nav-links" aria-label="Primary">
+				<a href="/index.html">Home</a>
+				<a href="/portfolio.html">Portfolio</a>
+				<a href="/blogs.html" aria-current="page">Blogs</a>
+				<a href="/services.html">Services</a>
+				<a href="/about.html">About</a>
+				<a href="/pricing.html">Pricing</a>
+				<a href="/contact.html" class="btn btn-primary">Contact</a>
+			</nav>
+		</div>
+	</header>
+	<main class="section">
+		<article class="container" itemscope itemtype="https://schema.org/BlogPosting">
+			<header>
+				<h1 itemprop="headline">Practical SQL Patterns for Analytics</h1>
+				<p class="text-muted">Jan 2025 • 5 min read</p>
+			</header>
+			<section>
+				<h2>Window functions</h2>
+				<p>Rank customers by spend and compute rolling totals.</p>
+				<pre><code>-- Monthly spend per customer with rank
+WITH monthly AS (
+  SELECT customer_id, date_trunc('month', order_date) AS month, SUM(amount) AS spend
+  FROM orders
+  GROUP BY 1,2
+)
+SELECT
+  customer_id,
+  month,
+  spend,
+  SUM(spend) OVER (PARTITION BY customer_id ORDER BY month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS rolling_3m,
+  RANK() OVER (PARTITION BY month ORDER BY spend DESC) AS spend_rank
+FROM monthly;
+</code></pre>
+			</section>
+			<section>
+				<h2>Cohort analysis</h2>
+				<pre><code>WITH first_order AS (
+  SELECT customer_id, MIN(order_date) AS cohort
+  FROM orders
+  GROUP BY 1
+), orders_labeled AS (
+  SELECT o.customer_id, o.order_date, DATE_TRUNC('month', o.order_date) AS month,
+         DATE_TRUNC('month', fo.cohort) AS cohort_month
+  FROM orders o JOIN first_order fo USING (customer_id)
+)
+SELECT cohort_month,
+       DATE_PART('month', month - cohort_month) AS month_number,
+       COUNT(DISTINCT customer_id) AS active_customers
+FROM orders_labeled
+GROUP BY 1,2
+ORDER BY 1,2;
+</code></pre>
+			</section>
+		</article>
+	</main>
+	<footer class="footer"><div class="container"><p class="m-0">© <span id="year"></span> Siddhartha Srivastava.</p></div></footer>
+	<script src="/js/script.js" defer></script>
+	<script>document.getElementById('year').textContent=new Date().getFullYear();</script>
+</body>
+</html>
