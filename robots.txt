@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://siddharthasrivastav.github.io/sitemap.xml

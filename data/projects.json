@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Retail Sales Performance Dashboard",
+    "slug": "retail-sales-tableau",
+    "category": ["Tableau"],
+    "summary": "Interactive Tableau workbook analyzing sales, customers, and profitability with drill-down views.",
+    "tech": ["Tableau"],
+    "image": "assets/images/projects/sales-tableau.svg",
+    "links": {
+      "github": "https://github.com/Siddharthasrivastav/Sales-Data-Analysis-Tableau",
+      "tableau": "REPLACE_WITH_TABLEAU_PUBLIC_URL_IF_AVAILABLE"
+    }
+  },
+  {
+    "title": "Pizza Sales Analytics (SQL + Power BI)",
+    "slug": "pizza-sales-sql-powerbi",
+    "category": ["SQL", "Power BI"],
+    "summary": "End-to-end pipeline: SQL queries for KPIs + Power BI dashboard with visuals and measures.",
+    "tech": ["SQL", "Power BI"],
+    "image": "assets/images/projects/pizza-powerbi.svg",
+    "links": {
+      "github": "https://github.com/Siddharthasrivastav/Pizza-Sale-Data-Analysis-SQL",
+      "powerbi": "REPLACE_WITH_POWER_BI_EMBED_URL"
+    }
+  },
+  {
+    "title": "Credit Card Transactions Analysis (Power BI)",
+    "slug": "credit-card-transactions-powerbi",
+    "category": ["Power BI"],
+    "summary": "Metrics on spend categories, customer segments, and trends with slicers and drillthrough.",
+    "tech": ["Power BI"],
+    "image": "assets/images/projects/credit-card-powerbi.svg",
+    "links": {
+      "github": "https://github.com/Siddharthasrivastav/Credit-card-Transaction-Power-Bi-Project",
+      "powerbi": "REPLACE_WITH_POWER_BI_EMBED_URL"
+    }
+  }
+]
